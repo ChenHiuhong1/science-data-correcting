@@ -1,80 +1,80 @@
 ---
-description: 检测科研数据Excel中连续数值序列的重复匹配（multiset匹配），生成标注Excel和Word报告
+description: Detect duplicate consecutive numeric sequences (multiset matching) in scientific Excel data. Generates annotated Excel files and Word reports.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, TaskCreate, TaskUpdate
 ---
 
-# Science Data Correcting — 科研数据连续匹配检测
+# Science Data Correcting — Consecutive Sequence Match Detection
 
-用户提供一个Excel数据文件路径，对其中所有sheet进行连续数值序列的重复匹配检测，并生成标注文件和报告。
+Given an Excel data file path, scan all sheets for consecutive numeric sequence duplicates and generate annotated files and reports.
 
-## 输入
+## Input
 
-用户提供Excel文件路径，例如：`$ARGUMENTS`
+User provides an Excel file path, e.g.: `$ARGUMENTS`
 
-如果用户没有提供路径，请用 AskUserQuestion 询问。
+If no path is provided, use AskUserQuestion to ask.
 
-## 检测逻辑
+## Detection Logic
 
-### 1. 提取数值序列
-- 遍历所有sheet的每一行
-- 提取每行中连续的数值单元格序列（遇到非数值/空值则断开）
-- 仅保留长度 >= 3 的序列
+### 1. Extract Numeric Sequences
+- Iterate through every row in all sheets
+- Extract contiguous numeric cell sequences (break on non-numeric/empty cells)
+- Keep only sequences with length >= 3
 
-### 2. 滑动窗口匹配
-- 对每条序列，生成所有长度 3~12 的滑动窗口
-- 将窗口内的值排序后作为 multiset key
-- 过滤平凡匹配：跳过全相同值、仅2种不同值且窗口>4的情况
+### 2. Sliding Window Matching
+- For each sequence, generate all sliding windows of size 3–12
+- Sort values within each window to create a multiset key
+- Filter trivial matches: skip all-same values, or windows with only 2 distinct values when size > 4
 
-### 3. 跨行匹配
-- 找出相同 multiset key 出现在不同行的情况
-- 对每对行，只保留最长的匹配
-- 进一步过滤：size>=4 要求 >=3 种不同值，size=3 要求 >=2 种不同值
-- 标记顺序是否不同（重点关注不同顺序的匹配）
+### 3. Cross-Row Matching
+- Find identical multiset keys appearing in different rows
+- For each row pair, keep only the longest match
+- Additional filtering: size >= 4 requires >= 3 distinct values; size = 3 requires >= 2 distinct values
+- Flag whether the order differs (focus on different-order matches)
 
-### 4. 分类
-- 同sheet匹配 vs 跨sheet匹配
-- 按匹配长度分级：7(红) > 6(橙红) > 5(深橙) > 4(金) > 3(浅黄)
+### 4. Classification
+- Within-sheet matches vs. cross-sheet matches
+- Severity by match length: 7 (red) > 6 (orange-red) > 5 (dark orange) > 4 (gold) > 3 (light yellow)
 
-## 输出文件
+## Output Files
 
-在输入文件同目录下生成以下文件：
+All output files are saved in the same directory as the input file.
 
-### 标注版Excel（两份）
-1. `{原文件名}_同sheet匹配.xlsx` — 仅标注同sheet内的匹配
-2. `{原文件名}_跨sheet匹配.xlsx` — 仅标注跨sheet的匹配
+### Annotated Excel (2 files)
+1. `{filename}_within_sheet_matches.xlsx` — only within-sheet matches
+2. `{filename}_cross_sheet_matches.xlsx` — only cross-sheet matches
 
-标注方式：
-- 颜色高亮：按匹配长度分5级颜色
-- 单元格批注：悬停显示匹配详情（与哪个sheet/行/列的哪组值重复）
-- 批注最多显示5条，超出标注数量
-- 首页添加"匹配标注说明"sheet作为图例
+Annotation method:
+- Color highlighting: 5-level color scale by match length
+- Cell comments: hover to see match details (which sheet/row/column and which values it matches)
+- Up to 5 comments per cell; excess matches show a count
+- A legend sheet is added at the front of the workbook
 
-颜色方案：
+Color scheme:
 ```
-红色 FF0000 — 7个连续值匹配
-橙红 FF4500 — 6个连续值匹配
-深橙 FF8C00 — 5个连续值匹配
-金色 FFD700 — 4个连续值匹配
-浅黄 FFFF99 — 3个连续值匹配
+Red    FF0000 — 7 consecutive values matched
+OrangeRed FF4500 — 6 consecutive values matched
+DarkOrange FF8C00 — 5 consecutive values matched
+Gold   FFD700 — 4 consecutive values matched
+LightYellow FFFF99 — 3 consecutive values matched
 ```
 
-### Word报告
-`连续匹配检测报告.docx`，包含：
-1. 检测概述（参数、范围）
-2. 结果统计表（各级别匹配数量、跨sheet/同sheet分布）
-3. 高优先级匹配详情（>=5值），每对用表格展示两个位置和值
-4. 中优先级匹配（4值），按sheet对分组列表
-5. 低优先级匹配（3值）统计概览
-6. 热点行分析（参与匹配次数最多的行 top 30）
-7. 说明与注意事项
+### Word Report
+`match_detection_report.docx`, containing:
+1. Overview (parameters, scope)
+2. Summary statistics table (match counts by severity, within-sheet vs. cross-sheet)
+3. High-priority match details (>= 5 values), each pair shown in a table with both locations and values
+4. Medium-priority matches (4 values), grouped by sheet pair
+5. Low-priority matches (3 values) statistical overview
+6. Hotspot row analysis (top 30 rows by match participation count)
+7. Notes and caveats
 
-## 依赖
+## Dependencies
 
 - Python: openpyxl, python-docx
-- 如果缺少依赖，用 `pip install openpyxl python-docx` 安装
+- Install if missing: `pip install openpyxl python-docx`
 
-## 注意事项
+## Notes
 
-- 仅检测不同顺序的匹配（同一组值排列不同），相同顺序的不标注
-- 3值匹配在实验数据中可能是巧合，建议重点关注 >=5 值的匹配
-- 整数评分数据（如0, 3, 7, 10）的匹配可能是评分体系导致的，需结合实验背景判断
+- Only different-order matches are flagged (same values in different arrangement)
+- 3-value matches may be coincidental in experimental data; focus on >= 5-value matches
+- Integer score data (e.g., 0, 3, 7, 10) may match due to scoring scales — interpret with experimental context
