@@ -15,9 +15,9 @@ Given an Excel file with multiple sheets of experimental data, this skill:
 
 | File | Description |
 |------|-------------|
-| `*_同sheet匹配.xlsx` | Matches found within the same sheet |
-| `*_跨sheet匹配.xlsx` | Matches found across different sheets |
-| `连续匹配检测报告.docx` | Full Word report with statistics, details, and hotspot analysis |
+| `*_matching_in_sheet.xlsx` | Matches found within the same sheet |
+| `*_Inter_sheet_matching.xlsx` | Matches found across different sheets |
+| `detect_report.docx` | Full Word report with statistics, details, and hotspot analysis |
 
 ### Color Scheme
 
